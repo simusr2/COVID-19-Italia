@@ -1,4 +1,4 @@
-# COVID-19-Italia
+# 🦠 COVID-19-Italia
 I dati del COVID-19 in Italia in una semplice app Android. 
 
 Fonte:<br>
