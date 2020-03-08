@@ -1,11 +1,14 @@
 package it.simoa.covid_19italia.data
 
+import android.os.Parcel
 import android.os.Parcelable
 import kotlinx.android.parcel.Parcelize
 import java.util.*
+import java.lang.*
+
 
 @Parcelize
-public class AndamentoNazionale(
+class AndamentoNazionale(
     val data: Date,
     val stato: String,
     val ricoverati_con_sintomi: Int,
@@ -17,6 +20,6 @@ public class AndamentoNazionale(
     val dimessi_guariti: Int,
     val deceduti: Int,
     val totale_casi: Int,
-    val tamponi: Int
-) : CovidData(), Parcelable {
+    val tamponi: Int): Parcelable{
+
 }

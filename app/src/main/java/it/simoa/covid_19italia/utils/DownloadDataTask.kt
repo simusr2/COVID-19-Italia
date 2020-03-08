@@ -1,10 +1,8 @@
 package it.simoa.covid_19italia.utils
 
 import android.os.AsyncTask
-import com.google.gson.Gson
+import android.os.Parcelable
 import com.google.gson.GsonBuilder
-import com.google.gson.reflect.TypeToken
-import it.simoa.covid_19italia.data.AndamentoNazionale
 import it.simoa.covid_19italia.data.CovidData
 import java.lang.reflect.Type
 import java.net.URL
@@ -18,7 +16,7 @@ enum class DownloadUrls(val url: String, val tipo: Type) {
     AndamentoProvinciale("", CovidData::class.java)
 }
 
-class DownloadDataTask<T> : AsyncTask<DownloadUrls, Void, Array<T>>() where T : CovidData {
+class DownloadDataTask<T> : AsyncTask<DownloadUrls, Void, Array<T>>() where T : Parcelable {
     override fun doInBackground(vararg params: DownloadUrls?): Array<T> {
         val param: DownloadUrls = params[0] as DownloadUrls
         val result = URL(param.url).readText()
