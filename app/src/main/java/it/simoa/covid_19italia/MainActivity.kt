@@ -42,10 +42,10 @@ class MainActivity : AppCompatActivity() {
 
         if(data != null) {
 
-            val lastAndamentoNazionale: AndamentoNazionale = data[12]
+            val lastAndamentoNazionale: AndamentoNazionale = data[data.size - 1]
             ShowAndamentoNazionale(lastAndamentoNazionale)
 
-            val maxValue: Int = lastAndamentoNazionale.totale_attualmente_positivi
+            val maxValue: Int = lastAndamentoNazionale.totale_casi
 
             // background color
             chart.setBackgroundColor(Color.TRANSPARENT)
@@ -175,7 +175,14 @@ class MainActivity : AppCompatActivity() {
             val formatter: ValueFormatter =
                 object : ValueFormatter() {
                     override fun getAxisLabel(value: Float, axis: AxisBase): String {
-                        return xValues[value.toInt()]
+
+                        return if(value.toInt() > xValues.size - 1){
+                            xValues[xValues.size - 1]
+                        }else{
+                            xValues[value.toInt()]
+                        }
+
+
                     }
                 }
             xAxis.setValueFormatter(formatter)
