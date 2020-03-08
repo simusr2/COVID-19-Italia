@@ -20,6 +20,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.ceil
 
 
 class MainActivity : AppCompatActivity() {
@@ -43,6 +44,8 @@ class MainActivity : AppCompatActivity() {
 
             val lastAndamentoNazionale: AndamentoNazionale = data[12]
             ShowAndamentoNazionale(lastAndamentoNazionale)
+
+            val maxValue: Int = lastAndamentoNazionale.totale_attualmente_positivi
 
             // background color
             chart.setBackgroundColor(Color.TRANSPARENT)
@@ -90,7 +93,9 @@ class MainActivity : AppCompatActivity() {
                 // horizontal grid lines
                 yAxis.enableGridDashedLine(10f, 10f, 0f)
                 // axis range
-                yAxis.axisMaximum = 6000f
+
+
+                yAxis.axisMaximum = (ceil(maxValue / 1000.0) * 1000).toFloat()
                 yAxis.axisMinimum = 0f
 
 
