@@ -1,9 +1,13 @@
 package it.simoa.covid_19italia
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.view.View
+import it.simoa.covid_19italia.data.AndamentoNazionale
+import it.simoa.covid_19italia.utils.DownloadDataTask
+import it.simoa.covid_19italia.utils.DownloadUrls
 import kotlinx.android.synthetic.main.activity_fullscreen.*
 
 /**
@@ -72,6 +76,18 @@ class FullscreenActivity : AppCompatActivity() {
         // are available.
         //delayedHide(100)
         hide()
+
+        // Temp
+        Thread.sleep(2500)
+
+        // Start loading data
+        val result: ArrayList<AndamentoNazionale> = DownloadDataTask<AndamentoNazionale>()
+            .execute(DownloadUrls.AndamentoNazionale).get().toCollection(ArrayList())
+
+        // Open MainActivity
+        val intent = Intent(applicationContext, MainActivity::class.java)
+        intent.putParcelableArrayListExtra("data", result) // Temp putExtra
+        startActivity(intent)
     }
 
     private fun toggle() {
