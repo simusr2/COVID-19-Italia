@@ -23,7 +23,7 @@ class DownloadDataTask<T> : AsyncTask<DownloadUrls, Void, Array<T>>() where T : 
 
 
         val gsonBuilder = GsonBuilder()
-            .setDateFormat("yyyy-MM-dd HH:mm:ss")
+            .setDateFormat("yyyy-MM-dd'T'HH:mm:ss")
         val gson = gsonBuilder.create()
         val Model = gson.fromJson<Array<T>>(result,param.tipo)
 

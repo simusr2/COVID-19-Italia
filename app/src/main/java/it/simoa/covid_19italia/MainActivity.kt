@@ -177,7 +177,7 @@ class MainActivity : AppCompatActivity() {
                     override fun getAxisLabel(value: Float, axis: AxisBase): String {
 
                         return if(value.toInt() > xValues.size - 1){
-                            xValues[xValues.size - 1]
+                            ""
                         }else{
                             xValues[value.toInt()]
                         }
