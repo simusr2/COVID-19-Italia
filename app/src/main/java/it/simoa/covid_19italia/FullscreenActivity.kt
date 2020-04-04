@@ -83,15 +83,14 @@ class FullscreenActivity : AppCompatActivity() {
 
         mHideHandler.postDelayed(Runnable {
             // Start loading data
-            val result: ArrayList<AndamentoNazionale> = DownloadDataTask<AndamentoNazionale>()
-                .execute(DownloadUrls.AndamentoNazionale).get().toCollection(ArrayList())
+
 
             // Open MainActivity
             val intent = Intent(applicationContext, MainActivity::class.java)
-            intent.putParcelableArrayListExtra("data", result) // Temp putExtra
+            //intent.putParcelableArrayListExtra("data", result) // Temp putExtra
             startActivity(intent)
             this.finish()
-        }, 2500.toLong())
+        }, 1000.toLong())
 
 
     }

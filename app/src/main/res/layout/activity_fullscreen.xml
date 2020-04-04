@@ -18,7 +18,8 @@
         android:id="@+id/imageView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:srcCompat="@drawable/covid_2019_ncov_cdc_23312_without_background" />
+        app:srcCompat="@drawable/covid_2019_ncov_cdc_23312_without_background"
+        android:contentDescription="@string/covid_19_background" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -46,7 +47,7 @@
             android:layout_marginStart="8dp"
             android:layout_marginLeft="8dp"
             android:layout_marginTop="8dp"
-            android:text="Fonte: Dipartimento della Protezione Civile"
+            android:text="@string/fonte_dipartimento_della_protezione_civile"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 

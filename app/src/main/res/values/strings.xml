@@ -4,4 +4,6 @@
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
     <string name="title_activity_main">MainActivity</string>
+    <string name="covid_19_background">covid_19_background</string>
+    <string name="fonte_dipartimento_della_protezione_civile">Fonte: Dipartimento della Protezione Civile</string>
 </resources>

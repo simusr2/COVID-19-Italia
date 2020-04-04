@@ -1,15 +1,15 @@
 package it.simoa.covid_19italia
 
-import android.app.AlertDialog
 import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.github.mikephil.charting.components.AxisBase
-import com.github.mikephil.charting.components.Legend.LegendForm
+import com.github.mikephil.charting.components.Legend
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.components.YAxis
 import com.github.mikephil.charting.data.Entry
@@ -18,12 +18,29 @@ import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.ValueFormatter
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet
 import com.google.android.material.snackbar.Snackbar
-import it.simoa.covid_19italia.data.AndamentoNazionale
 import it.simoa.covid_19italia.data.DatiPerProvincia
 import it.simoa.covid_19italia.data.DatiPerRegione
 import it.simoa.covid_19italia.utils.DownloadDataTask
 import it.simoa.covid_19italia.utils.DownloadUrls
-import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.activity_datiperregione.*
+import kotlinx.android.synthetic.main.content_datiperregione.*
+import kotlinx.android.synthetic.main.content_datiperregione.chart
+import kotlinx.android.synthetic.main.content_datiperregione.data
+import kotlinx.android.synthetic.main.content_datiperregione.dataGroup
+import kotlinx.android.synthetic.main.content_datiperregione.deceduti
+import kotlinx.android.synthetic.main.content_datiperregione.dimessiGuariti
+import kotlinx.android.synthetic.main.content_datiperregione.isolamentoDomiciliare
+import kotlinx.android.synthetic.main.content_datiperregione.nuoviPositivi
+import kotlinx.android.synthetic.main.content_datiperregione.provinciaBtn
+import kotlinx.android.synthetic.main.content_datiperregione.regioneBtn
+import kotlinx.android.synthetic.main.content_datiperregione.ricoveratiConSintomi
+import kotlinx.android.synthetic.main.content_datiperregione.showChartButton
+import kotlinx.android.synthetic.main.content_datiperregione.tamponi
+import kotlinx.android.synthetic.main.content_datiperregione.terapiaIntensiva
+import kotlinx.android.synthetic.main.content_datiperregione.totaleCasi
+import kotlinx.android.synthetic.main.content_datiperregione.totaleOspedalizzati
+import kotlinx.android.synthetic.main.content_datiperregione.totalePositivi
+import kotlinx.android.synthetic.main.content_datiperregione.variazioneTotalePositivi
 import kotlinx.android.synthetic.main.content_main.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -31,12 +48,16 @@ import kotlin.collections.ArrayList
 import kotlin.math.ceil
 
 
-class MainActivity : AppCompatActivity() {
+class DatiPerRegioneActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_datiperregione)
         setSupportActionBar(toolbar)
+
+        // Get intent data
+        val regione = intent.getStringExtra("regione")
+        //val fullData = intent.getParcelableArrayListExtra<DatiPerRegione>("data")
 
         fab.setOnClickListener { view ->
             Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
@@ -50,14 +71,14 @@ class MainActivity : AppCompatActivity() {
                 .execute(DownloadUrls.DatiPerProvincia).get().toCollection(ArrayList())
 
             // Open MainActivity
-            val intent = Intent(applicationContext, MainActivity::class.java)
+            val intent = Intent(applicationContext, DatiPerRegioneActivity::class.java)
             intent.putParcelableArrayListExtra("data", result) // Temp putExtra
             startActivity(intent)
             this.finish()
         }
 
         regioneBtn.setOnClickListener{
-            val options = arrayOf("Abruzzo", "Basilicata", "Calabria", "Campania", "Emilia Romagna", "Friuli Venezia Giulia", "Lazio", "Liguria", "Lombardia", "Marche", "Molise", "P.A. Bolzano", "P.A. Trento", "Piemonte", "Puglia", "Sardegna", "Sicilia", "Toscana", "Umbria", "Valle d'Aosta", "Veneto")
+            val options = arrayOf("Abruzzo", "Basilicata", "Calabria", "Campania", "Emilia-Romagna", "Friuli Venezia Giulia", "Lazio", "Liguria", "Lombardia", "Marche", "Molise", "P.A. Bolzano", "P.A. Trento", "Piemonte", "Puglia", "Sardegna", "Sicilia", "Toscana", "Umbria", "Valle d'Aosta", "Veneto")
             val window: AlertDialog.Builder = AlertDialog.Builder(this)
             window.setTitle("Pick a color")
             window.setItems(options, DialogInterface.OnClickListener { dialog, which ->
@@ -72,19 +93,37 @@ class MainActivity : AppCompatActivity() {
             window.show()
         }
 
-        // Get intent data
-        val intent: Intent = intent // TODO
-        val data = intent.getParcelableArrayListExtra<AndamentoNazionale>("data")
 
-        if(data != null) {
 
-            val lastAndamentoNazionale: AndamentoNazionale = data[data.size - 1]
-            ShowAndamentoNazionale(lastAndamentoNazionale)
+        // Start loading data
+        val fullData: ArrayList<DatiPerRegione> = DownloadDataTask<DatiPerRegione>()
+            .execute(DownloadUrls.DatiPerRegione).get().toCollection(ArrayList())
+
+
+        this.title = this.title.toString() + " " + regione
+
+        if(fullData != null) {
+
+
+            val data: ArrayList<DatiPerRegione> = ArrayList()
+
+            fullData.forEach{
+                if(it.denominazione_regione == regione){
+                    data.add(it);
+                }
+            }
+
+
+
+
+
+            val last: DatiPerRegione = data[data.size - 1]
+            ShowData(last)
 
             val xValues: Array<String> = Array(data.size) { "" }
             val lineData: ArrayList<ILineDataSet> = GetLineDataSet(data, xValues);
 
-            SetGraph(DownloadUrls.AndamentoNazionale, lineData, lastAndamentoNazionale.totale_casi, data.size, xValues)
+            SetGraph(DownloadUrls.AndamentoNazionale, lineData, last.totale_casi, data.size, xValues)
 
             dataGroup.visibility = View.VISIBLE
             chart.visibility = View.INVISIBLE
@@ -101,16 +140,49 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
+        regioneBtn.setOnClickListener {
+            val options = arrayOf("Abruzzo", "Basilicata", "Calabria", "Campania", "Emilia-Romagna",
+                "Friuli Venezia Giulia", "Lazio", "Liguria", "Lombardia", "Marche", "Molise",
+                "P.A. Bolzano", "P.A. Trento", "Piemonte", "Puglia", "Sardegna", "Sicilia",
+                "Toscana", "Umbria", "Valle d'Aosta", "Veneto")
+            val window: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(this)
+            window.setTitle("Pick a color")
+            window.setItems(options, DialogInterface.OnClickListener { _, which ->
+                StartDatiPerRegioneActivity(options[which])
+            })
+
+            window.show()
+        }
+
+        nazioneBtn.setOnClickListener {
+            StartAndamentoNazionaleActivity()
+        }
+
     }
 
-    fun GetLineDataSet(data: ArrayList<AndamentoNazionale>, xValues: Array<String>): ArrayList<ILineDataSet>{
+    fun StartDatiPerRegioneActivity(regione: String){
+        // Open MainActivity
+        val intent = Intent(applicationContext, DatiPerRegioneActivity::class.java)
+        intent.putExtra("regione", regione) // Temp putExtra
+        startActivity(intent)
+    }
+
+    fun StartAndamentoNazionaleActivity(){
+        // Open MainActivity
+        val intent = Intent(applicationContext, MainActivity::class.java)
+        startActivity(intent)
+    }
+
+    fun GetLineDataSet(data: ArrayList<DatiPerRegione>, xValues: Array<String>): ArrayList<ILineDataSet>{
         val dataSets:ArrayList<ILineDataSet> = ArrayList()
         val ricoverati_con_sintomi: ArrayList<Entry> = ArrayList()
         val terapia_intensiva: ArrayList<Entry> = ArrayList()
         val totale_ospedalizzati: ArrayList<Entry> = ArrayList()
         val isolamento_domiciliare: ArrayList<Entry> = ArrayList()
-        val totale_attualmente_positivi: ArrayList<Entry> = ArrayList()
-        val nuovi_attualmente_positivi: ArrayList<Entry> = ArrayList()
+        val totale_positivi: ArrayList<Entry> = ArrayList()
+        val variazione_totale_positivi: ArrayList<Entry> = ArrayList()
+        val nuovi_positivi: ArrayList<Entry> = ArrayList()
         val dimessi_guariti: ArrayList<Entry> = ArrayList()
         val deceduti: ArrayList<Entry> = ArrayList()
         val totale_casi: ArrayList<Entry> = ArrayList()
@@ -122,8 +194,9 @@ class MainActivity : AppCompatActivity() {
             terapia_intensiva.add(Entry(i.toFloat(), it.terapia_intensiva.toFloat()))
             totale_ospedalizzati.add(Entry(i.toFloat(), it.totale_ospedalizzati.toFloat()))
             isolamento_domiciliare.add(Entry(i.toFloat(), it.isolamento_domiciliare.toFloat()))
-            totale_attualmente_positivi.add(Entry(i.toFloat(), it.totale_attualmente_positivi.toFloat()))
-            nuovi_attualmente_positivi.add(Entry(i.toFloat(), it.nuovi_attualmente_positivi.toFloat()))
+            totale_positivi.add(Entry(i.toFloat(), it.totale_positivi.toFloat()))
+            variazione_totale_positivi.add(Entry(i.toFloat(), it.variazione_totale_positivi.toFloat()))
+            nuovi_positivi.add(Entry(i.toFloat(), it.nuovi_positivi.toFloat()))
             dimessi_guariti.add(Entry(i.toFloat(), it.dimessi_guariti.toFloat()))
             deceduti.add(Entry(i.toFloat(), it.deceduti.toFloat()))
             totale_casi.add(Entry(i.toFloat(), it.totale_casi.toFloat()))
@@ -149,12 +222,16 @@ class MainActivity : AppCompatActivity() {
         set.color = Color.RED
         dataSets.add(set)
 
-        set = LineDataSet(isolamento_domiciliare, "Totale attualmente positivi")
+        set = LineDataSet(isolamento_domiciliare, "Totale positivi")
         set.color = Color.rgb(255,117,20);
         dataSets.add(set)
 
-        set = LineDataSet(nuovi_attualmente_positivi, "Nuovi attualmente positivi")
+        set = LineDataSet(variazione_totale_positivi, "Variazione totale positivi")
         set.color = Color.GRAY
+        dataSets.add(set)
+
+        set = LineDataSet(nuovi_positivi, "Nuovi positivi")
+        set.color = Color.rgb(204, 0, 255)
         dataSets.add(set)
 
         set = LineDataSet(dimessi_guariti, "Dimessi guariti")
@@ -246,24 +323,24 @@ class MainActivity : AppCompatActivity() {
         chart.setDrawMarkers(true)
 
         // get the legend (only possible after setting data)
-        // get the legend (only possible after setting data)
         val l = chart.legend
 
         // draw legend entries as lines
-        // draw legend entries as lines
-        l.form = LegendForm.DEFAULT
+        l.form = Legend.LegendForm.DEFAULT
         l.isWordWrapEnabled = true
     }
 
-    fun ShowAndamentoNazionale(andamento: AndamentoNazionale){
+    fun ShowData(andamento: DatiPerRegione){
         //data.text = andamento.data
+
         data.text = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.ITALIAN).format(andamento.data)
         ricoveratiConSintomi.text = andamento.ricoverati_con_sintomi.toString()
         terapiaIntensiva.text = andamento.terapia_intensiva.toString()
         totaleOspedalizzati.text = andamento.totale_ospedalizzati.toString()
         isolamentoDomiciliare.text = andamento.isolamento_domiciliare.toString()
-        totaleAttualmentePositivi.text = andamento.totale_attualmente_positivi.toString()
-        nuoviAttualmentePositivi.text = andamento.nuovi_attualmente_positivi.toString()
+        totalePositivi.text = andamento.totale_positivi.toString()
+        variazioneTotalePositivi.text = andamento.variazione_totale_positivi.toString()
+        nuoviPositivi.text = andamento.nuovi_positivi.toString()
         dimessiGuariti.text = andamento.dimessi_guariti.toString()
         deceduti.text = andamento.deceduti.toString()
         totaleCasi.text = andamento.totale_casi.toString()
