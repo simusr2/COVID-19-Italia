@@ -19,11 +19,13 @@ import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.ValueFormatter
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet
 import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.analytics.FirebaseAnalytics
 import it.simoa.covid_19italia.data.AndamentoNazionale
 import it.simoa.covid_19italia.data.DatiPerProvincia
 import it.simoa.covid_19italia.data.DatiPerRegione
 import it.simoa.covid_19italia.utils.DownloadDataTask
 import it.simoa.covid_19italia.utils.DownloadUrls
+import it.simoa.covid_19italia.utils.Util
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
 import java.text.SimpleDateFormat
@@ -34,10 +36,18 @@ import kotlin.math.ceil
 
 class MainActivity : AppCompatActivity() {
 
+    // Firebase
+    private var mFirebaseAnalytics: FirebaseAnalytics? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
+
+        // Obtain the FirebaseAnalytics instance.
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this)
+
+        mFirebaseAnalytics?.logEvent("DatiAndamentoNazionaleActivity", null)
 
         fab.setOnClickListener { view ->
             Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
@@ -77,33 +87,57 @@ class MainActivity : AppCompatActivity() {
                 StartAndamentoNazionaleActivity()
         }
 
+        showChartButton.setOnClickListener {
+            if(chart.visibility == View.INVISIBLE){
+                dataGroup.visibility = View.INVISIBLE
+                chart.visibility = View.VISIBLE
+                showChartButton.text = "Nascondi grafico"
+            }else{
+                dataGroup.visibility = View.VISIBLE
+                chart.visibility = View.INVISIBLE
+                showChartButton.text = "Mostra grafico"
+            }
+        }
+
+        if(Util.isNetworkAvailable(this)){
+            GetAndSetDatiNazionali()
+        }else{
+            ShowNetworkError()
+        }
+    }
+
+
+    private fun ShowNetworkError(){
+        val dlgAlert: androidx.appcompat.app.AlertDialog.Builder = androidx.appcompat.app.AlertDialog.Builder(this)
+        dlgAlert.setMessage("Connessione ad internet non disponibile")
+        dlgAlert.setTitle("Errore di rete")
+        dlgAlert.setPositiveButton("Riprova") { _, _ ->
+            if(Util.isNetworkAvailable(this)){
+                GetAndSetDatiNazionali()
+            }else{
+                ShowNetworkError()
+            }
+        }
+        dlgAlert.setNegativeButton("Chiudi") { _, _ -> this.finish() }
+        dlgAlert.setCancelable(false)
+        dlgAlert.create().show()
+    }
+
+    fun GetAndSetDatiNazionali(){
+        mFirebaseAnalytics?.logEvent("DownloadDatiNazionali", null)
         val data: ArrayList<AndamentoNazionale> = DownloadDataTask<AndamentoNazionale>()
             .execute(DownloadUrls.AndamentoNazionale).get().toCollection(ArrayList())
 
+        val lastAndamentoNazionale: AndamentoNazionale = data[data.size - 1]
+        ShowAndamentoNazionale(lastAndamentoNazionale)
 
+        val xValues: Array<String> = Array(data.size) { "" }
+        val lineData: ArrayList<ILineDataSet> = GetLineDataSet(data, xValues);
 
-            val lastAndamentoNazionale: AndamentoNazionale = data[data.size - 1]
-            ShowAndamentoNazionale(lastAndamentoNazionale)
+        SetGraph(DownloadUrls.AndamentoNazionale, lineData, lastAndamentoNazionale.totale_casi, data.size, xValues)
 
-            val xValues: Array<String> = Array(data.size) { "" }
-            val lineData: ArrayList<ILineDataSet> = GetLineDataSet(data, xValues);
-
-            SetGraph(DownloadUrls.AndamentoNazionale, lineData, lastAndamentoNazionale.totale_casi, data.size, xValues)
-
-            dataGroup.visibility = View.VISIBLE
-            chart.visibility = View.INVISIBLE
-
-            showChartButton.setOnClickListener {
-                if(chart.visibility == View.INVISIBLE){
-                    dataGroup.visibility = View.INVISIBLE
-                    chart.visibility = View.VISIBLE
-                    showChartButton.text = "Nascondi grafico"
-                }else{
-                    dataGroup.visibility = View.VISIBLE
-                    chart.visibility = View.INVISIBLE
-                    showChartButton.text = "Mostra grafico"
-                }
-            }
+        dataGroup.visibility = View.VISIBLE
+        chart.visibility = View.INVISIBLE
 
     }
 

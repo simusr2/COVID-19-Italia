@@ -1,20 +1,25 @@
 package it.simoa.covid_19italia
 
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.view.View
-import it.simoa.covid_19italia.data.AndamentoNazionale
-import it.simoa.covid_19italia.utils.DownloadDataTask
-import it.simoa.covid_19italia.utils.DownloadUrls
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.analytics.FirebaseAnalytics
+import it.simoa.covid_19italia.utils.Util
 import kotlinx.android.synthetic.main.activity_fullscreen.*
+
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
 class FullscreenActivity : AppCompatActivity() {
+
+    // Firebase
+    private var mFirebaseAnalytics: FirebaseAnalytics? = null
+
     private val mHideHandler = Handler()
     private val mHidePart2Runnable = Runnable {
         // Delayed removal of status and navigation bar
@@ -57,6 +62,11 @@ class FullscreenActivity : AppCompatActivity() {
         setContentView(R.layout.activity_fullscreen)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
+        //Util.CheckNetwork(this, this)
+
+        // Obtain the FirebaseAnalytics instance.
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this)
+
         mVisible = true
 
         // Set up the user interaction to manually show or hide the system UI.
@@ -80,7 +90,32 @@ class FullscreenActivity : AppCompatActivity() {
         // Temp
         //Thread.sleep(2500)
 
+        if(Util.isNetworkAvailable(this)){
+            StartAction(1000);
+        }else{
+            ShowNetworkError()
+        }
 
+    }
+
+    private fun ShowNetworkError(){
+        val dlgAlert: AlertDialog.Builder = AlertDialog.Builder(this)
+        dlgAlert.setMessage("Connessione ad internet non disponibile")
+        dlgAlert.setTitle("Errore di rete")
+        dlgAlert.setPositiveButton("Riprova") { _, _ ->
+            if(Util.isNetworkAvailable(this)){
+                StartAction(0);
+            }else{
+                ShowNetworkError()
+            }
+        }
+        dlgAlert.setNegativeButton("Chiudi") { _, _ -> this.finish() }
+        dlgAlert.setCancelable(false)
+        dlgAlert.create().show()
+    }
+
+    private fun StartAction(delayMillis: Int){
+        mFirebaseAnalytics?.logEvent(FirebaseAnalytics.Event.APP_OPEN, null)
         mHideHandler.postDelayed(Runnable {
             // Start loading data
 
@@ -90,9 +125,7 @@ class FullscreenActivity : AppCompatActivity() {
             //intent.putParcelableArrayListExtra("data", result) // Temp putExtra
             startActivity(intent)
             this.finish()
-        }, 1000.toLong())
-
-
+        }, delayMillis.toLong())
     }
 
     private fun toggle() {
