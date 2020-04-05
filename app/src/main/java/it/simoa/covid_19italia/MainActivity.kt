@@ -1,13 +1,8 @@
 package it.simoa.covid_19italia
 
-import android.app.AlertDialog
-import android.content.Context
-import android.content.DialogInterface
-import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.github.mikephil.charting.components.AxisBase
 import com.github.mikephil.charting.components.Legend.LegendForm
@@ -18,21 +13,17 @@ import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.ValueFormatter
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet
-import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.analytics.FirebaseAnalytics
 import it.simoa.covid_19italia.data.AndamentoNazionale
-import it.simoa.covid_19italia.data.DatiPerProvincia
-import it.simoa.covid_19italia.data.DatiPerRegione
 import it.simoa.covid_19italia.utils.DownloadDataTask
 import it.simoa.covid_19italia.utils.DownloadUrls
-import it.simoa.covid_19italia.utils.Util
+import it.simoa.covid_19italia.utils.OpenSection
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.ceil
-
 
 class MainActivity : AppCompatActivity() {
 
@@ -44,83 +35,19 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
 
-        // Obtain the FirebaseAnalytics instance.
-        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this)
-
-        mFirebaseAnalytics?.logEvent("DatiAndamentoNazionaleActivity", null)
-
-        fab.setOnClickListener { view ->
+        /*fab.setOnClickListener { view ->
             Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show() // Todo
-        }
+        }*/
 
-        provinciaBtn.setOnClickListener{ view ->
-            // TODO
-            // Start loading data
-            val result: ArrayList<DatiPerProvincia> = DownloadDataTask<DatiPerProvincia>()
-                .execute(DownloadUrls.DatiPerProvincia).get().toCollection(ArrayList())
+        mFirebaseAnalytics = OpenSection.OpenActivityFirebase(this, "DatiAndamentoNazionaleActivity")
 
-            // Open MainActivity
-            val intent = Intent(applicationContext, MainActivity::class.java)
-            intent.putParcelableArrayListExtra("data", result) // Temp putExtra
-            startActivity(intent)
-            //this.finish()
-        }
+        provinciaBtn.setOnClickListener(OpenSection.ClickOnProvincia(this))
+        regioneBtn.setOnClickListener(OpenSection.ClickOnRegione(this))
+        nazioneBtn.setOnClickListener(OpenSection.ClickOnNazione(this))
+        showChartButton.setOnClickListener(OpenSection.ClickShowChart(this, chart, dataGroup, buttonGroup, showChartButton))
 
-        val currentContext: Context = applicationContext;
-
-        regioneBtn.setOnClickListener {
-            val options = arrayOf("Abruzzo", "Basilicata", "Calabria", "Campania", "Emilia-Romagna",
-                "Friuli Venezia Giulia", "Lazio", "Liguria", "Lombardia", "Marche", "Molise",
-                "P.A. Bolzano", "P.A. Trento", "Piemonte", "Puglia", "Sardegna", "Sicilia",
-                "Toscana", "Umbria", "Valle d'Aosta", "Veneto")
-            val window: AlertDialog.Builder = AlertDialog.Builder(this)
-            window.setTitle("Pick a color")
-            window.setItems(options, DialogInterface.OnClickListener { _, which ->
-                StartDatiPerRegioneActivity(options[which])
-            })
-
-            window.show()
-        }
-
-        nazioneBtn.setOnClickListener {
-                StartAndamentoNazionaleActivity()
-        }
-
-        showChartButton.setOnClickListener {
-            if(chart.visibility == View.INVISIBLE){
-                dataGroup.visibility = View.INVISIBLE
-                chart.visibility = View.VISIBLE
-                showChartButton.text = "Nascondi grafico"
-            }else{
-                dataGroup.visibility = View.VISIBLE
-                chart.visibility = View.INVISIBLE
-                showChartButton.text = "Mostra grafico"
-            }
-        }
-
-        if(Util.isNetworkAvailable(this)){
-            GetAndSetDatiNazionali()
-        }else{
-            ShowNetworkError()
-        }
-    }
-
-
-    private fun ShowNetworkError(){
-        val dlgAlert: androidx.appcompat.app.AlertDialog.Builder = androidx.appcompat.app.AlertDialog.Builder(this)
-        dlgAlert.setMessage("Connessione ad internet non disponibile")
-        dlgAlert.setTitle("Errore di rete")
-        dlgAlert.setPositiveButton("Riprova") { _, _ ->
-            if(Util.isNetworkAvailable(this)){
-                GetAndSetDatiNazionali()
-            }else{
-                ShowNetworkError()
-            }
-        }
-        dlgAlert.setNegativeButton("Chiudi") { _, _ -> this.finish() }
-        dlgAlert.setCancelable(false)
-        dlgAlert.create().show()
+        OpenSection.CheckNetwork(this, this::GetAndSetDatiNazionali)
     }
 
     fun GetAndSetDatiNazionali(){
@@ -138,20 +65,6 @@ class MainActivity : AppCompatActivity() {
 
         dataGroup.visibility = View.VISIBLE
         chart.visibility = View.INVISIBLE
-
-    }
-
-    fun StartDatiPerRegioneActivity(regione: String){
-        // Open MainActivity
-        val intent = Intent(applicationContext, DatiPerRegioneActivity::class.java)
-        intent.putExtra("regione", regione) // Temp putExtra
-        startActivity(intent)
-    }
-
-    fun StartAndamentoNazionaleActivity(){
-        // Open MainActivity
-        val intent = Intent(applicationContext, MainActivity::class.java)
-        startActivity(intent)
     }
 
     fun GetLineDataSet(data: ArrayList<AndamentoNazionale>, xValues: Array<String>): ArrayList<ILineDataSet>{

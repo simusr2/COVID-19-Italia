@@ -14,26 +14,25 @@ import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.ValueFormatter
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet
 import com.google.firebase.analytics.FirebaseAnalytics
-import it.simoa.covid_19italia.data.DatiPerRegione
+import it.simoa.covid_19italia.data.DatiPerProvincia
 import it.simoa.covid_19italia.utils.DownloadDataTask
 import it.simoa.covid_19italia.utils.DownloadUrls
 import it.simoa.covid_19italia.utils.OpenSection
 import kotlinx.android.synthetic.main.activity_datiperregione.*
-import kotlinx.android.synthetic.main.content_datiperregione.*
+import kotlinx.android.synthetic.main.content_datiperrprovincia.*
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.ceil
 
-
-class DatiPerRegioneActivity : AppCompatActivity() {
+class DatiPerProvinciaActivity : AppCompatActivity() {
 
     // Firebase
     private var mFirebaseAnalytics: FirebaseAnalytics? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_datiperregione)
+        setContentView(R.layout.activity_datiperprovincia)
         setSupportActionBar(toolbar)
 
         mFirebaseAnalytics = OpenSection.OpenActivityFirebase(this, "DatiAndamentoNazionaleActivity")
@@ -43,28 +42,29 @@ class DatiPerRegioneActivity : AppCompatActivity() {
         nazioneBtn.setOnClickListener(OpenSection.ClickOnNazione(this))
         showChartButton.setOnClickListener(OpenSection.ClickShowChart(this, chart, dataGroup, buttonGroup, showChartButton))
 
-        OpenSection.CheckNetwork(this, this::GetAndSetDatiRegionali)
+        OpenSection.CheckNetwork(this, this::GetAndSetDatiProvinciali)
     }
 
-    fun GetAndSetDatiRegionali(){
+    fun GetAndSetDatiProvinciali(){
         // Get intent data
         val regione = intent.getStringExtra("regione")
+        val provincia = intent.getStringExtra("provincia")
 
         // Start loading data
-        val fullData: ArrayList<DatiPerRegione> = DownloadDataTask<DatiPerRegione>()
-            .execute(DownloadUrls.DatiPerRegione).get().toCollection(ArrayList())
+        val fullData: ArrayList<DatiPerProvincia> = DownloadDataTask<DatiPerProvincia>()
+            .execute(DownloadUrls.DatiPerProvincia).get().toCollection(ArrayList())
 
-        this.title = this.title.toString() + " " + regione
+        this.title = this.title.toString() + " " + provincia + " " + regione
 
-        val data: ArrayList<DatiPerRegione> = ArrayList()
+        val data: ArrayList<DatiPerProvincia> = ArrayList()
 
         fullData.forEach{
-            if(it.denominazione_regione == regione){
+            if(it.denominazione_regione == regione && it.denominazione_provincia == provincia){
                 data.add(it);
             }
         }
 
-        val last: DatiPerRegione = data[data.size - 1]
+        val last: DatiPerProvincia = data[data.size - 1]
         ShowData(last)
 
         val xValues: Array<String> = Array(data.size) { "" }
@@ -74,85 +74,25 @@ class DatiPerRegioneActivity : AppCompatActivity() {
 
         dataGroup.visibility = View.VISIBLE
         chart.visibility = View.INVISIBLE
-
     }
 
-    fun GetLineDataSet(data: ArrayList<DatiPerRegione>, xValues: Array<String>): ArrayList<ILineDataSet>{
+    fun GetLineDataSet(data: ArrayList<DatiPerProvincia>, xValues: Array<String>): ArrayList<ILineDataSet>{
         val dataSets:ArrayList<ILineDataSet> = ArrayList()
-        val ricoverati_con_sintomi: ArrayList<Entry> = ArrayList()
-        val terapia_intensiva: ArrayList<Entry> = ArrayList()
-        val totale_ospedalizzati: ArrayList<Entry> = ArrayList()
-        val isolamento_domiciliare: ArrayList<Entry> = ArrayList()
-        val totale_positivi: ArrayList<Entry> = ArrayList()
-        val variazione_totale_positivi: ArrayList<Entry> = ArrayList()
-        val nuovi_positivi: ArrayList<Entry> = ArrayList()
-        val dimessi_guariti: ArrayList<Entry> = ArrayList()
-        val deceduti: ArrayList<Entry> = ArrayList()
         val totale_casi: ArrayList<Entry> = ArrayList()
-        val tamponi: ArrayList<Entry> = ArrayList()
 
         var i = 0
         data.forEach {
-            ricoverati_con_sintomi.add(Entry(i.toFloat(), it.ricoverati_con_sintomi.toFloat()))
-            terapia_intensiva.add(Entry(i.toFloat(), it.terapia_intensiva.toFloat()))
-            totale_ospedalizzati.add(Entry(i.toFloat(), it.totale_ospedalizzati.toFloat()))
-            isolamento_domiciliare.add(Entry(i.toFloat(), it.isolamento_domiciliare.toFloat()))
-            totale_positivi.add(Entry(i.toFloat(), it.totale_positivi.toFloat()))
-            variazione_totale_positivi.add(Entry(i.toFloat(), it.variazione_totale_positivi.toFloat()))
-            nuovi_positivi.add(Entry(i.toFloat(), it.nuovi_positivi.toFloat()))
-            dimessi_guariti.add(Entry(i.toFloat(), it.dimessi_guariti.toFloat()))
-            deceduti.add(Entry(i.toFloat(), it.deceduti.toFloat()))
             totale_casi.add(Entry(i.toFloat(), it.totale_casi.toFloat()))
-            tamponi.add(Entry(i.toFloat(), it.tamponi.toFloat()))
 
             xValues[i] = SimpleDateFormat("dd/MM/yyyy", Locale.ITALIAN).format(it.data)
             i++
         }
 
-        var set = LineDataSet(ricoverati_con_sintomi, "Ricoverati con sintomi")
-        set.color = Color.BLACK
-        dataSets.add(set)
-
-        set = LineDataSet(terapia_intensiva, "Terapia intensiva")
-        set.color = Color.BLUE
-        dataSets.add(set)
-
-        set = LineDataSet(totale_ospedalizzati, "Totale ospedalizzati")
-        set.color = Color.CYAN
-        dataSets.add(set)
-
-        set = LineDataSet(isolamento_domiciliare, "Isolamento domiciliare")
-        set.color = Color.RED
-        dataSets.add(set)
-
-        set = LineDataSet(isolamento_domiciliare, "Totale positivi")
-        set.color = Color.rgb(255,117,20);
-        dataSets.add(set)
-
-        set = LineDataSet(variazione_totale_positivi, "Variazione totale positivi")
-        set.color = Color.GRAY
-        dataSets.add(set)
-
-        set = LineDataSet(nuovi_positivi, "Nuovi positivi")
-        set.color = Color.rgb(204, 0, 255)
-        dataSets.add(set)
-
-        set = LineDataSet(dimessi_guariti, "Dimessi guariti")
-        set.color = Color.GREEN
-        dataSets.add(set)
-
-        set = LineDataSet(deceduti, "Deceduti")
-        set.color = Color.YELLOW
-        dataSets.add(set)
-
-        set = LineDataSet(totale_casi, "Totale casi")
+        val set = LineDataSet(totale_casi, "Totale casi")
         set.color = Color.MAGENTA
         dataSets.add(set)
 
-        /*set = LineDataSet(tamponi, "Tamponi")
-        set.color = Color.DKGRAY
-        dataSets.add(set)*/
-        return dataSets;
+        return dataSets
     }
 
     fun SetGraph(type: DownloadUrls, data: ArrayList<ILineDataSet>, maxValue: Int, numberOfValues: Int, xValues: Array<String>){
@@ -233,21 +173,11 @@ class DatiPerRegioneActivity : AppCompatActivity() {
         l.isWordWrapEnabled = true
     }
 
-    fun ShowData(andamento: DatiPerRegione){
+    fun ShowData(andamento: DatiPerProvincia){
         //data.text = andamento.data
 
         data.text = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.ITALIAN).format(andamento.data)
-        ricoveratiConSintomi.text = andamento.ricoverati_con_sintomi.toString()
-        terapiaIntensiva.text = andamento.terapia_intensiva.toString()
-        totaleOspedalizzati.text = andamento.totale_ospedalizzati.toString()
-        isolamentoDomiciliare.text = andamento.isolamento_domiciliare.toString()
-        totalePositivi.text = andamento.totale_positivi.toString()
-        variazioneTotalePositivi.text = andamento.variazione_totale_positivi.toString()
-        nuoviPositivi.text = andamento.nuovi_positivi.toString()
-        dimessiGuariti.text = andamento.dimessi_guariti.toString()
-        deceduti.text = andamento.deceduti.toString()
         totaleCasi.text = andamento.totale_casi.toString()
-        tamponi.text = andamento.tamponi.toString()
 
     }
 }

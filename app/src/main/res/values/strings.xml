@@ -6,4 +6,6 @@
     <string name="title_activity_main">MainActivity</string>
     <string name="covid_19_background">covid_19_background</string>
     <string name="fonte_dipartimento_della_protezione_civile">Fonte: Dipartimento della Protezione Civile</string>
+    <string name="nascondiGrafico">Nascondi grafico</string>
+    <string name="MostraGrafico">Mostra grafico</string>
 </resources>
